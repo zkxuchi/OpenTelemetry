@@ -2,7 +2,7 @@
 
 ## 目录
 
-- [概述](./Overview.md)
+- [概述](./overview.md)
 - [Glossary](https://opentelemetry.io/docs/specs/otel/glossary/)
 - [Versioning and stability for OpenTelemetry clients](https://opentelemetry.io/docs/specs/otel/versioning-and-stability/)
 - Library Guidelines
