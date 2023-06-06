@@ -9,7 +9,7 @@
   - [OTel客户端架构](#otel客户端架构)
     - [API](#api)
     - [SDK](#sdk)
-    - [Semantic Conventions](#semantic-conventions)
+    - [语义规范 Semantic Conventions](#语义规范-semantic-conventions)
     - [Contrib Packages](#contrib-packages)
     - [Versioning and Stability](#versioning-and-stability)
   - [Tracing Signal](#tracing-signal)
@@ -58,18 +58,17 @@ OTel客户端在设计上，将每种信号中必须作为**横切关注点**插
 
 ### API
 
-API packages consist of the cross-cutting public interfaces used for instrumentation. Any portion of an OpenTelemetry client which is imported into third-party libraries and application code is considered part of the API.
+API包由用于插码的**横切公共接口**（cross-cutting public interfaces）组成。OTel客户端中，任何导入第三方库或应用代码的部分，都被认为是API的一部分。
 
 ### SDK
 
-The SDK is the implementation of the API provided by the OpenTelemetry project. Within an application, the SDK is installed and managed by the [application owner](glossary.md#application-owner).
-Note that the SDK includes additional public interfaces which are not considered part of the API package, as they are not cross-cutting concerns. These public interfaces are defined as [constructors](glossary.md#constructors) and [plugin interfaces](glossary.md#sdk-plugins).
-Application owners use the SDK constructors; [plugin authors](glossary.md#plugin-author) use the SDK plugin interfaces.
-[Instrumentation authors](glossary.md#instrumentation-author) MUST NOT directly reference any SDK package of any kind, only the API.
+SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用所有者**（[application owner](glossary.md#应用所有者)）安装与管理。
+需要注意，SDK包含了额外的公共接口（public interfaces），这些公共接口并不是API的一部分，因为它们不是**横切关注点**（cross-cutting concerns）。这些公共接口被定义为**构造函数**（[constructors](glossary.md#构造函数)）和**插件接口**（[plugin interfaces](glossary.md#插件接口)）。
+**应用所有者**使用SDK构造函数；**插件作者**（[plugin authors](glossary.md#插件作者)）使用SDK插件接口。
+插桩作者（[Instrumentation authors](glossary.md#插桩作者)）**不能**直接引用任何类型的SDK包，只能引用API。
 
-### Semantic Conventions
-
-The **Semantic Conventions** define the keys and values which describe commonly observed concepts, protocols, and operations used by applications.
+### 语义规范 Semantic Conventions
+**语义规范**定义了键和值（key-value），以描述应用程序广泛使用的概念、协议和操作。
 
 Semantic Conventions are now located in their own repository:
 [https://github.com/open-telemetry/semantic-conventions](https://github.com/open-telemetry/semantic-conventions)
