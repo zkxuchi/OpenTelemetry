@@ -1,57 +1,60 @@
-# Overview
+# 概述
 
 <details>
-<summary>Table of Contents</summary>
+<summary>目录</summary>
 
 <!-- toc -->
 
-- [OpenTelemetry Client Architecture](#opentelemetry-client-architecture)
-  * [API](#api)
-  * [SDK](#sdk)
-  * [Semantic Conventions](#semantic-conventions)
-  * [Contrib Packages](#contrib-packages)
-  * [Versioning and Stability](#versioning-and-stability)
-- [Tracing Signal](#tracing-signal)
-  * [Traces](#traces)
-  * [Spans](#spans)
-  * [SpanContext](#spancontext)
-  * [Links between spans](#links-between-spans)
-- [Metric Signal](#metric-signal)
-  * [Recording raw measurements](#recording-raw-measurements)
-    + [Measure](#measure)
-    + [Measurement](#measurement)
-  * [Recording metrics with predefined aggregation](#recording-metrics-with-predefined-aggregation)
-  * [Metrics data model and SDK](#metrics-data-model-and-sdk)
-- [Log Signal](#log-signal)
-  * [Data model](#data-model)
-- [Baggage Signal](#baggage-signal)
-- [Resources](#resources)
-- [Context Propagation](#context-propagation)
-- [Propagators](#propagators)
-- [Collector](#collector)
-- [Instrumentation Libraries](#instrumentation-libraries)
+- [概述](#概述)
+  - [OTel客户端架构](#otel客户端架构)
+    - [API](#api)
+    - [SDK](#sdk)
+    - [Semantic Conventions](#semantic-conventions)
+    - [Contrib Packages](#contrib-packages)
+    - [Versioning and Stability](#versioning-and-stability)
+  - [Tracing Signal](#tracing-signal)
+    - [Traces](#traces)
+    - [Spans](#spans)
+    - [SpanContext](#spancontext)
+    - [Links between spans](#links-between-spans)
+  - [Metric Signal](#metric-signal)
+    - [Recording raw measurements](#recording-raw-measurements)
+      - [Measure](#measure)
+      - [Measurement](#measurement)
+    - [Recording metrics with predefined aggregation](#recording-metrics-with-predefined-aggregation)
+    - [Metrics data model and SDK](#metrics-data-model-and-sdk)
+  - [Log Signal](#log-signal)
+    - [Data model](#data-model)
+  - [Baggage Signal](#baggage-signal)
+  - [Resources](#resources)
+  - [Context Propagation](#context-propagation)
+  - [Propagators](#propagators)
+  - [Collector](#collector)
+  - [Instrumentation Libraries](#instrumentation-libraries)
 
 <!-- tocstop -->
 
 </details>
 
-This document provides an overview of the OpenTelemetry project and defines important fundamental terms.
+本文档提供了OpenTelemetry（OTel）项目的概述，并定义了重要的基本术语。
 
-Additional term definitions can be found in the [glossary](glossary.md).
+其他术语定义可以在[术语表](glossary.md)中找到。
 
-## OpenTelemetry Client Architecture
+## OTel客户端架构
 
-![Cross cutting concerns](../internal/img/architecture.png)
+![Cross cutting concerns](img/architecture.svg)
 
-At the highest architectural level, OpenTelemetry clients are organized into [**signals**](glossary.md#signals).
-Each signal provides a specialized form of observability. For example, tracing, metrics, and baggage are three separate signals.
-Signals share a common subsystem – **context propagation** – but they function independently from each other.
+架构最上层, OTel客户端由[**信号（signals）**](glossary.md#信号)组成。
+**信号**是可观测性的一种特定数据结构，如：tracing、metrics、baggage是三类信号。
+**信号**共用一个子系统**context propagation**，但每种信号独立发挥作用。
 
-Each signal provides a mechanism for software to describe itself. A codebase, such as web framework or a database client, takes a dependency on various signals in order to describe itself. OpenTelemetry instrumentation code can then be mixed into the other code within that codebase.
-This makes OpenTelemetry a [**cross-cutting concern**](https://en.wikipedia.org/wiki/Cross-cutting_concern) - a piece of software which is mixed into many other pieces of software in order to provide value. Cross-cutting concerns, by their very nature, violate a core design principle – separation of concerns. As a result, OpenTelemetry client design requires extra care and attention to avoid creating issues for the codebases which depend upon these cross-cutting APIs.
+每种**信号**都是软件描述自身的一种方式。
+各类代码库（如：web框架、数据库客户端）都需要通过各种**信号**来描述自身。
+OTel的**插桩（instrumentation）**代码可混入各类代码库的源码中（该过程称之为**插码**），从而使OTel成为**横切关注点（[cross-cutting concern](https://en.wikipedia.org/wiki/Cross-cutting_concern)）**。
+由于**横切关注点**本质上违反了SOC（分离关注点separation of concerns）设计原则，因此使用**横切**（cross-cutting） APIs进行**插码**时需要额外谨慎，以避免源码库产生问题。
 
-OpenTelemetry clients are designed to separate the portion of each signal which must be imported as cross-cutting concerns from the portions which can be managed independently. OpenTelemetry clients are also designed to be an extensible framework.
-To accomplish these goals, each signal consists of four types of packages: API, SDK, Semantic Conventions, and Contrib.
+OTel客户端在设计上，将每种信号中必须作为**横切关注点**插码的部分与可独立管理的部分拆分，同时作为一个可扩展框架。
+因此，每种信号由4类包组成：API、SDK、语义规范（Semantic Conventions）、Contrib。
 
 ### API
 
