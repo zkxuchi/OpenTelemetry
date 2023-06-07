@@ -12,12 +12,12 @@
     - [语义规范](#语义规范)
     - [Contrib程序包](#contrib程序包)
     - [版本控制与稳定性](#版本控制与稳定性)
-  - [调用链追踪信号](#调用链追踪信号)
+  - [调用链信号](#调用链信号)
     - [调用链](#调用链)
     - [Spans](#spans)
     - [SpanContext](#spancontext)
-    - [Links between spans](#links-between-spans)
-  - [Metric Signal](#metric-signal)
+    - [span间的链接](#span间的链接)
+  - [指标信号](#指标信号)
     - [Recording raw measurements](#recording-raw-measurements)
       - [Measure](#measure)
       - [Measurement](#measurement)
@@ -92,7 +92,7 @@ OTel规范要求提供OTLP exporters、TraceContext Propagators等插件，并�
 
 OTel项目重视稳定性及向后兼容性，详情可参阅[版本控制与稳定性](versioning-and-stability.md)。
 
-## 调用链追踪信号
+## 调用链信号
 
 调用链追踪信号（Tracing Signal）主体是**分布式调用链**（distributed trace）。
 每个分布式调用链由一组事件（events）组成，每个事件由单次逻辑操作生成，并跨应用的各个组件合并而成。其所包含的事件横跨进程（process）、网络（network）及各安全域边界（security boundaries）。
@@ -138,68 +138,35 @@ Span代表对一个事务的一次操作，封装了以下状态：
 
 - 操作名称（operation name）
 - 起止时间
-- 
-- An operation name
-- A start and finish timestamp
-- [**Attributes**](./common/README.md#attribute): A list of key-value pairs.
-- A set of zero or more **Events**, each of which is itself a tuple (timestamp, name, [**Attributes**](./common/README.md#attribute)). The name must be strings.
-- Parent's **Span** identifier.
-- [**Links**](#links-between-spans) to zero or more causally-related **Spans**
-  (via the **SpanContext** of those related **Spans**).
-- **SpanContext** information required to reference a Span. See below.
+- [属性](./common/README.md#属性)（Attributes）：一组键值对。
+- 事件（Events）：元组（tuple），包含时间戳、名称与属性，名称必须是字符串。
+- 父span标识符
+- [链接](#span间的链接)（Links）：具有因果关系的其他span。
+- SpanContext：索引span所需信息
 
 ### SpanContext
 
-Represents all the information that identifies **Span** in the **Trace** and
-MUST be propagated to child Spans and across process boundaries. A
-**SpanContext** contains the tracing identifiers and the options that are
-propagated from parent to child **Spans**.
+SpanContext是在调用链中，标识一个span所需的信息，包含调用链识符，以及从父span传播（propagate）至子span的标示符。SpanContext必须可横跨进程边界传播到子span。
 
-- **TraceId** is the identifier for a trace. It is worldwide unique with
-  practically sufficient probability by being made as 16 randomly generated
-  bytes. TraceId is used to group all spans for a specific trace together across
-  all processes.
-- **SpanId** is the identifier for a span. It is globally unique with
-  practically sufficient probability by being made as 8 randomly generated
-  bytes. When passed to a child Span this identifier becomes the parent span id
-  for the child **Span**.
-- **TraceFlags** represents the options for a trace. It is represented as 1
-  byte (bitmap).
-  - Sampling bit -  Bit to represent whether trace is sampled or not (mask
-    `0x1`).
-- **Tracestate** carries tracing-system specific context in a list of key value
-  pairs. **Tracestate** allows different vendors propagate additional
-  information and inter-operate with their legacy Id formats. For more details
-  see [this](https://w3c.github.io/trace-context/#tracestate-field).
+- **TraceId** 调用链标示符，16字节，随机生成，全局唯一。用以跨进程组合调用链的所有span。
+- **SpanId** span标示符，8字节，随机生成，全局唯一。 并作为父span id传递至子span。
+- **TraceFlags** 调用链选项，1字节（bitmap）。
+  - Sampling bit -  该bit位标识该调用链是否被采样 (mask `0x1`)。
+- **Tracestate** 键值对，用于携带特定上下文信息。**Tracestate** 允许各厂商传播附加信息，并可与其legacy Id格式相互操作。详情参阅[w3c规范](https://w3c.github.io/trace-context/#tracestate-field)。
 
-### Links between spans
+### span间的链接
 
-A **Span** may be linked to zero or more other **Spans** (defined by
-**SpanContext**) that are causally related. **Links** can point to
-**Spans** inside a single **Trace** or across different **Traces**.
-**Links** can be used to represent batched operations where a **Span** was
-initiated by multiple initiating **Spans**, each representing a single incoming
-item being processed in the batch.
+每个span可链接多个具有因果关系的其他span。**链接**（Links）可指向相同或不同调用链中的span。**链接**可表示批处理操作，当一个span由多个初始化中的span发起，则每个被链接的span表示该批处理中的单个传入项目。
 
-Another example of using a **Link** is to declare the relationship between
-the originating and following trace. This can be used when a **Trace** enters trusted
-boundaries of a service and service policy requires the generation of a new
-Trace rather than trusting the incoming Trace context. The new linked Trace may
-also represent a long running asynchronous data processing operation that was
-initiated by one of many fast incoming requests.
+**链接**还可用于声明初始调用链与后续调用链直接的关系，如：当一个调用链进入服务的信任边界（trusted boundaries），该服务的策略要求生成新的调用链，而非信任原调用链上下文（context）。
+此外，链接的调用链也可用于标识高并发下，一个请求发起的长时间运行的异步数据操作。
 
-When using the scatter/gather (also called fork/join) pattern, the root
-operation starts multiple downstream processing operations and all of them are
-aggregated back in a single **Span**. This last **Span** is linked to many
-operations it aggregates. All of them are the **Spans** from the same Trace. And
-similar to the Parent field of a **Span**. It is recommended, however, to not
-set parent of the **Span** in this scenario as semantically the parent field
-represents a single parent scenario, in many cases the parent **Span** fully
-encloses the child **Span**. This is not the case in scatter/gather and batch
-scenarios.
+当使用分散scatter/聚集gather（分支fork/合并join）模式时，根操作会启动多个下游处理操作，每个下游操作生成一个span的同时，又并会将所有操作结果聚合回最后一个Span中，这个span被链接到这些被聚合操作的span上，且所有spans属于同一个调用链。这时**链接**和span的父字段（parent field）作用类似，但是该场景下父字段不适用，因为父字段用于标识只有一个父span的场景，在分散/集合与批处理场景下，最后一个span会有多个父span。
 
-## Metric Signal
+## 指标信号
 
+OTel支持记录原始的测量值或者指标，
+Metric Signal
 OpenTelemetry allows to record raw measurements or metrics with predefined
 aggregation and a [set of attributes](./common/README.md#attribute).
 
