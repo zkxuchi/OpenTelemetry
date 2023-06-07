@@ -69,6 +69,7 @@ SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用�
 
 ### 语义规范 Semantic Conventions
 **语义规范**定义了键和值（key-value），以描述应用程序广泛使用的概念、协议和操作。
+语义规范位于独立的仓库：
 
 Semantic Conventions are now located in their own repository:
 [https://github.com/open-telemetry/semantic-conventions](https://github.com/open-telemetry/semantic-conventions)
