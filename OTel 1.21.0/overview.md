@@ -9,11 +9,11 @@
   - [OTel客户端架构](#otel客户端架构)
     - [API](#api)
     - [SDK](#sdk)
-    - [语义规范 Semantic Conventions](#语义规范-semantic-conventions)
-    - [Contrib Packages](#contrib-packages)
-    - [Versioning and Stability](#versioning-and-stability)
-  - [Tracing Signal](#tracing-signal)
-    - [Traces](#traces)
+    - [语义规范](#语义规范)
+    - [Contrib程序包](#contrib程序包)
+    - [版本控制与稳定性](#版本控制与稳定性)
+  - [调用链追踪信号](#调用链追踪信号)
+    - [调用链](#调用链)
     - [Spans](#spans)
     - [SpanContext](#spancontext)
     - [Links between spans](#links-between-spans)
@@ -50,7 +50,7 @@
 
 每种**信号**都是软件描述自身的一种方式。
 各类代码库（如：web框架、数据库客户端）都需要通过各种**信号**来描述自身。
-OTel的**插桩（instrumentation）**代码可混入各类代码库的源码中（该过程称之为**插码**），从而使OTel成为**横切关注点（[cross-cutting concern](https://en.wikipedia.org/wiki/Cross-cutting_concern)）**。
+OTel的**插桩（instrumentation）**代码可插入各代码库的源码中（该过程称之为**插码**），从而使OTel成为**横切关注点（[cross-cutting concern](https://en.wikipedia.org/wiki/Cross-cutting_concern)）**。
 由于**横切关注点**本质上违反了SOC（分离关注点separation of concerns）设计原则，因此使用**横切**（cross-cutting） APIs进行**插码**时需要额外谨慎，以避免源码库产生问题。
 
 OTel客户端在设计上，将每种信号中必须作为**横切关注点**插码的部分与可独立管理的部分拆分，同时作为一个可扩展框架。
@@ -67,63 +67,45 @@ SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用�
 **应用所有者**使用SDK构造函数；**插件作者**（[plugin authors](glossary.md#插件作者)）使用SDK插件接口。
 插桩作者（[Instrumentation authors](glossary.md#插桩作者)）**不能**直接引用任何类型的SDK包，只能引用API。
 
-### 语义规范 Semantic Conventions
-**语义规范**定义了键和值（key-value），以描述应用程序广泛使用的概念、协议和操作。
-语义规范位于独立的仓库：
+### 语义规范
 
-Semantic Conventions are now located in their own repository:
-[https://github.com/open-telemetry/semantic-conventions](https://github.com/open-telemetry/semantic-conventions)
+**语义规范**（Semantic Conventions）定义了键和值（key-value），以描述应用程序广泛使用的概念、协议和操作。
+语义规范位于独立的仓库：https://github.com/zkxuchi/OpenTelemetry/tree/main/Semantic%20Conventions
 
-Both the collector and the client libraries SHOULD autogenerate semantic
-convention keys and enum values into constants (or language idiomatic
-equivalent). Generated values shouldn't be distributed in stable packages
-until semantic conventions are stable.
-The [YAML](https://github.com/open-telemetry/semantic-conventions/tree/main/semantic_conventions) files MUST be used as the
-source of truth for generation. Each language implementation SHOULD
-provide language-specific support to the
-[code generator](https://github.com/open-telemetry/build-tools/tree/main/semantic-conventions#code-generator).
+OTel的collector和客户端lib库都应该将语义规范中的**键**与其**枚举值**自动生成为常量。
+在语义规范版本稳定前，规范键值对**不能**写入程序中，而必须使用**YAML**文件作为配置来源。
+每种语言的OTel实现（SDK）都应该提供该语言相应的[**代码生成器**](https://github.com/zkxuchi/OpenTelemetry/tree/main/Semantic%20Conventions#代码生成器)。
 
-Additionally, attributes required by the specification will be listed
-[here](semantic-conventions.md)
+此外，语义规范中的[**保留属性**](semantic-conventions.md#保留属性)不能被使用。
 
-### Contrib Packages
+### Contrib程序包
 
-The OpenTelemetry project maintains integrations with popular OSS projects which have been identified as important for observing modern web services.
-Example API integrations include instrumentation for web frameworks, database clients, and message queues.
-Example SDK integrations include plugins for exporting telemetry to popular analysis tools and telemetry storage systems.
+OTel项目也会维护与一些常见OSS项目的集成，这些OSS项目对web服务的可观测性有重要作用。API集成示例包含：web框架的插码，数据库客户端，以及消息队列等。SDK集成示例包含将OTel信号输出至常见分析工具或OTel存储系统的各类插件。
 
-Some plugins, such as OTLP Exporters and TraceContext Propagators, are required by the OpenTelemetry specification. These required plugins are included as part of the SDK.
+OTel规范要求提供OTLP exporters、TraceContext Propagators等插件，并作为SDK的一部分。
+插件以及插桩程序包可选，且与SDK分离，作为**Contrib**程序包。
+**API Contrib**是指仅依赖API的程序包；**SDK Contrib**是指同时依赖SDK的程序包。
 
-Plugins and instrumentation packages which are optional and separate from the SDK are referred to as **Contrib** packages.
-**API Contrib** refers to packages which depend solely upon the API; **SDK Contrib** refers to packages which also depend upon the SDK.
+术语**Contrib**特指OTel项目维护的插件与插桩的合集，不涉及第三方插件。
 
-The term Contrib specifically refers to the collection of plugins and instrumentation maintained by the OpenTelemetry project; it does not refer to third-party plugins hosted elsewhere.
+### 版本控制与稳定性
 
-### Versioning and Stability
+OTel项目重视稳定性及向后兼容性，详情可参阅[版本控制与稳定性](versioning-and-stability.md)。
 
-OpenTelemetry values stability and backwards compatibility. Please see the [versioning and stability guide](./versioning-and-stability.md) for details.
+## 调用链追踪信号
 
-## Tracing Signal
+调用链追踪信号（Tracing Signal）主体是**分布式调用链**（distributed trace）。
+每个分布式调用链由一组事件（events）组成，每个事件由单次逻辑操作生成，并跨应用的各个组件合并而成。其所包含的事件横跨进程（process）、网络（network）及各安全域边界（security boundaries）。
+一个分布式调用链可能由一次页面按钮点击开始，涵盖为处理此点击产生的请求链，下游服务之间的调用。
 
-A distributed trace is a set of events, triggered as a result of a single
-logical operation, consolidated across various components of an application. A
-distributed trace contains events that cross process, network and security
-boundaries. A distributed trace may be initiated when someone presses a button
-to start an action on a website - in this example, the trace will represent
-calls made between the downstream services that handled the chain of requests
-initiated by this button being pressed.
+### 调用链
 
-### Traces
+OTel中的调用链（Traces）通过其**spans**隐式定义。一个调用链可以认为是一组span的有向无环图（DAG: directed acyclic graph），且span之间的边（edges）被定义为父/子（parent/child）关系。
 
-**Traces** in OpenTelemetry are defined implicitly by their **Spans**. In
-particular, a **Trace** can be thought of as a directed acyclic graph (DAG) of
-**Spans**, where the edges between **Spans** are defined as parent/child
-relationship.
-
-For example, the following is an example **Trace** made up of 6 **Spans**:
+例如，下图是6个span组成的调用链：
 
 ```
-Causal relationships between Spans in a single Trace
+单个调用链中span之间的因果关系
 
         [Span A]  ←←←(the root span)
             |
@@ -136,11 +118,10 @@ Causal relationships between Spans in a single Trace
            [Span E]    [Span F]
 ```
 
-Sometimes it's easier to visualize **Traces** with a time axis as in the diagram
-below:
+调用链的可视化通常使用带时间轴的瀑布图表示：
 
 ```
-Temporal relationships between Spans in a single Trace
+单个调用链中span之间的时序关系
 
 ––|–––––––|–––––––|–––––––|–––––––|–––––––|–––––––|–––––––|–> time
 
@@ -153,9 +134,11 @@ Temporal relationships between Spans in a single Trace
 
 ### Spans
 
-A span represents an operation within a transaction. Each **Span** encapsulates
-the following state:
+Span代表对一个事务的一次操作，封装了以下状态：
 
+- 操作名称（operation name）
+- 起止时间
+- 
 - An operation name
 - A start and finish timestamp
 - [**Attributes**](./common/README.md#attribute): A list of key-value pairs.
