@@ -18,11 +18,11 @@
     - [SpanContext](#spancontext)
     - [span间的链接](#span间的链接)
   - [指标信号](#指标信号)
-    - [Recording raw measurements](#recording-raw-measurements)
-      - [Measure](#measure)
-      - [Measurement](#measurement)
-    - [Recording metrics with predefined aggregation](#recording-metrics-with-predefined-aggregation)
-    - [Metrics data model and SDK](#metrics-data-model-and-sdk)
+    - [记录原始测量值](#记录原始测量值)
+      - [Measure类](#measure类)
+      - [Measurement类](#measurement类)
+    - [基于预定义聚合类型记录指标](#基于预定义聚合类型记录指标)
+    - [指标数据模型与SDK](#指标数据模型与sdk)
   - [Log Signal](#log-signal)
     - [Data model](#data-model)
   - [Baggage Signal](#baggage-signal)
@@ -165,71 +165,42 @@ SpanContext是在调用链中，标识一个span所需的信息，包含调用�
 
 ## 指标信号
 
-OTel支持记录原始的测量值或者指标，
-Metric Signal
-OpenTelemetry allows to record raw measurements or metrics with predefined
-aggregation and a [set of attributes](./common/README.md#attribute).
+指标型号（Metric Signal），OTel支持记录**原始测量值**（raw measurements）与**指标**（metrics），并预定义了这些原始测量值与指标的聚合类型、[属性](./common/README.md#属性)。 
 
-Recording raw measurements using OpenTelemetry API allows to defer to end-user
-the decision on what aggregation algorithm should be applied for this metric as
-well as defining attributes (dimensions). It will be used in client libraries like
-gRPC to record raw measurements "server_latency" or "received_bytes". So end
-user will decide what type of aggregated values should be collected out of these
-raw measurements. It may be simple average or elaborate histogram calculation.
+通过OTel API记录原始测量值时，用户可自定义指标的聚合算法以及属性（维度）。客户端lib库通常使用该方式记录原始测量值，如：gPRC的“服务端延迟（server_latency）”、“接收字节数（received_bytes）”等。随后用户通过原始测量值生成所需的聚合值类型，如：平均值、直方图等。
 
-Recording of metrics with the pre-defined aggregation using OpenTelemetry API is
-not less important. It allows to collect values like cpu and memory usage, or
-simple metrics like "queue length".
+OTel API基于预定义聚合类型生成指标（metrics），此方式多用于采集CPU/内存用量、队列长度（queue length）等简单指标。
 
-### Recording raw measurements
+### 记录原始测量值
 
-The main classes used to record raw measurements are `Measure` and
-`Measurement`. List of `Measurement`s alongside the additional context can be
-recorded using OpenTelemetry API. So user may define to aggregate those
-`Measurement`s and use the context passed alongside to define additional
-attributes of the resulting metric.
+`Measure`和`Measurement`是OTel API记录原始测量值的两个主要的类（class）。`Measurement`用于列出OTel API支持的**测量值**及其附加的**上下文**信息，随后用户可定义**测量值**的聚合类型，并根据**上下文**信息定义该指标的附件**属性**。
 
-#### Measure
+#### Measure类
 
-`Measure` describes the type of the individual values recorded by a library. It
-defines a contract between the library exposing the measurements and an
-application that will aggregate those individual measurements into a `Metric`.
-`Measure` is identified by name, description and a unit of values.
+`Measure`类用于表述lib库记录的**值**类型，其定义了应用程序将**测量值**聚合成**指标**的模式。`Measure`由**名称**、**描述**、值的**单位**来标识。
 
-#### Measurement
+#### Measurement类
 
-`Measurement` describes a single value to be collected for a `Measure`.
-`Measurement` is an empty interface in API surface. This interface is defined in
-SDK.
+`Measurement`用于描述`Measure`所采集到的单个值，在API中暴露为空接口，该接口在SDK中定义。
 
-### Recording metrics with predefined aggregation
+### 基于预定义聚合类型记录指标
 
-The base class for all types of pre-aggregated metrics is called `Metric`. It
-defines basic metric properties like a name and attributes. Classes inheriting from
-the `Metric` define their aggregation type as well as a structure of individual
-measurements or Points. API defines the following types of pre-aggregated
-metrics:
+`Metric`是所有预聚合类型指标的基类（base class），其定义了基本的**指标**特征（properties），如：名称、属性（attributes）。从`Metric`继承的类则定义了指标的聚合类型以及单个测量值（measurements）的结构。API定义了以下预聚合指标类型：
 
-- Counter metric to report instantaneous measurement. Counter values can go
-  up or stay the same, but can never go down. Counter values cannot be
-  negative. There are two types of counter metric values - `double` and `long`.
-- Gauge metric to report instantaneous measurement of a numeric value. Gauges can
-  go both up and down. The gauges values can be negative. There are two types of
-  gauge metric values - `double` and `long`.
+- 计数指标（Counter metric）记录瞬时测量值。计数器的值**只增不减**（可不变），且**不能**为负数，支持`double`和`long`两种字段类型。
+- 计量指标（Gauge metric）也记录一个数字的瞬时测量值，但是其值**可增可减**，**可为负数**，也支持`double`和`long`两种字段类型。
 
-API allows to construct the `Metric` of a chosen type. SDK defines the way to
-query the current value of a `Metric` to be exported.
+此外，Prometheus的指标类型是OTel指标类型的**子集**，参阅[这里](https://www.timescale.com/blog/prometheus-vs-opentelemetry-metrics-a-complete-guide/)。
 
-Every type of a `Metric` has it's API to record values to be aggregated. API
-supports both - push and pull model of setting the `Metric` value.
+通过API构建`Metric`时，类型可选，SDK中则预定义了查询`Metric`值时的类型。
 
-### Metrics data model and SDK
+每种`Metric`类型都有各自的API记录所需聚合的值，且API支持推（push）、拉（pull）两种模式设置`Metric`的值。
 
-Metrics data model is [specified here](metrics/data-model.md) and is based on
-[metrics.proto](https://github.com/open-telemetry/opentelemetry-proto/blob/master/opentelemetry/proto/metrics/v1/metrics.proto).
-This data model defines three semantics: An Event model used by the API, an
-in-flight data model used by the SDK and OTLP, and a TimeSeries model which
-denotes how exporters should interpret the in-flight model.
+### 指标数据模型与SDK
+
+指标的数据模型参阅[这里](metrics/data-model.md)，模板文件[metrics.proto](https://github.com/open-telemetry/opentelemetry-proto/blob/master/opentelemetry/proto/metrics/v1/metrics.proto)。
+其中定义了3种语义（Semantics）：API使用的**事件**（Event）模型；SDK和OTLP使用的传输中（in-flight）数据模型；以及一个时序（timeseries）模型用于说明导出器（exporter）应该如何解析传输中（in-flight）数据模型。
+
 
 Different exporters have different capabilities (e.g. which data types are
 supported) and different constraints (e.g. which characters are allowed in attribute
