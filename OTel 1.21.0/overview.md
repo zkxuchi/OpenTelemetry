@@ -23,7 +23,7 @@
       - [Measurement类](#measurement类)
     - [基于预定义聚合类型记录指标](#基于预定义聚合类型记录指标)
     - [指标数据模型与SDK](#指标数据模型与sdk)
-  - [Log Signal](#log-signal)
+  - [日志信号](#日志信号)
     - [Data model](#data-model)
   - [Baggage Signal](#baggage-signal)
   - [Resources](#resources)
@@ -63,8 +63,8 @@ API包由用于插码的**横切公共接口**（cross-cutting public interfaces
 ### SDK
 
 SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用所有者**（[application owner](glossary.md#应用所有者)）安装与管理。
-需要注意，SDK包含了额外的公共接口（public interfaces），这些公共接口并不是API的一部分，因为它们不是**横切关注点**（cross-cutting concerns）。这些公共接口被定义为**构造函数**（[constructors](glossary.md#构造函数)）和**插件接口**（[plugin interfaces](glossary.md#插件接口)）。
-**应用所有者**使用SDK构造函数；**插件作者**（[plugin authors](glossary.md#插件作者)）使用SDK插件接口。
+需要注意，SDK包含了额外的公共接口（public interfaces），这些公共接口并不是API的一部分，因为它们不是**横切关注点**（cross-cutting concerns）。这些公共接口被定义为**构造器**（[constructors](glossary.md#构造器)）和**插件接口**（[plugin interfaces](glossary.md#插件接口)）。
+**应用所有者**使用SDK构造器；**插件作者**（[plugin authors](glossary.md#插件作者)）使用SDK插件接口。
 插桩作者（[Instrumentation authors](glossary.md#插桩作者)）**不能**直接引用任何类型的SDK包，只能引用API。
 
 ### 语义规范
@@ -139,9 +139,9 @@ Span代表对一个事务的一次操作，封装了以下状态：
 - 操作名称（operation name）
 - 起止时间
 - [属性](./common/README.md#属性)（Attributes）：一组键值对。
-- 事件（Events）：元组（tuple），包含时间戳、名称与属性，名称必须是字符串。
+- 事件（Events）：0或多个元组（tuple），包含时间戳、名称与属性，名称必须是字符串。
 - 父span标识符
-- [链接](#span间的链接)（Links）：具有因果关系的其他span。
+- [链接](#span间的链接)（Links）：0或多个具有因果关系的其他span。
 - SpanContext：索引span所需信息
 
 ### SpanContext
@@ -188,7 +188,7 @@ OTel API基于预定义聚合类型生成指标（metrics），此方式多用�
 `Metric`是所有预聚合类型指标的基类（base class），其定义了基本的**指标**特征（properties），如：名称、属性（attributes）。从`Metric`继承的类则定义了指标的聚合类型以及单个测量值（measurements）的结构。API定义了以下预聚合指标类型：
 
 - 计数指标（Counter metric）记录瞬时测量值。计数器的值**只增不减**（可不变），且**不能**为负数，支持`double`和`long`两种字段类型。
-- 计量指标（Gauge metric）也记录一个数字的瞬时测量值，但是其值**可增可减**，**可为负数**，也支持`double`和`long`两种字段类型。
+- 计量指标（Gauge metric）记录数字值的瞬时测量值，但是其值**可增可减**，**可为负数**，也支持`double`和`long`两种字段类型。
 
 此外，Prometheus的指标类型是OTel指标类型的**子集**，参阅[这里](https://www.timescale.com/blog/prometheus-vs-opentelemetry-metrics-a-complete-guide/)。
 
@@ -201,23 +201,13 @@ OTel API基于预定义聚合类型生成指标（metrics），此方式多用�
 指标的数据模型参阅[这里](metrics/data-model.md)，模板文件[metrics.proto](https://github.com/open-telemetry/opentelemetry-proto/blob/master/opentelemetry/proto/metrics/v1/metrics.proto)。
 其中定义了3种语义（Semantics）：API使用的**事件**（Event）模型；SDK和OTLP使用的传输中（in-flight）数据模型；以及一个时序（timeseries）模型用于说明导出器（exporter）应该如何解析传输中（in-flight）数据模型。
 
+不同的导出器具有不同的功能与约束（constraints），如：可支持不同的数据类型，约束属性键值的可用字符等。OTel指标旨在具有最大的类型兼容性。所有导出器都通过OTel SDK中定义的指标生产者接口（Metric Producer interface）从指标数据模型中消费数据。
 
-Different exporters have different capabilities (e.g. which data types are
-supported) and different constraints (e.g. which characters are allowed in attribute
-keys). Metrics is intended to be a superset of what's possible, not a lowest
-common denominator that's supported everywhere. All exporters consume data from
-Metrics Data Model via a Metric Producer interface defined in OpenTelemetry SDK.
+因此，指标对数据的约束最小（如：属性键值的可用字符），处理指标的代码应**避免**数据的验证和清洗，而应将数据传至后端（backend），由后端进行验证，并返回错误。
 
-Because of this, Metrics puts minimal constraints on the data (e.g. which
-characters are allowed in keys), and code dealing with Metrics should avoid
-validation and sanitization of the Metrics data. Instead, pass the data to the
-backend, rely on the backend to perform validation, and pass back any errors
-from the backend.
+参阅[指标数据模型规范](metrics/data-model.md) 获取更多信息。
 
-See [Metrics Data Model Specification](metrics/data-model.md) for more
-information.
-
-## Log Signal
+## 日志信号
 
 ### Data model
 
