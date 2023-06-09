@@ -10,7 +10,7 @@
     - [API](#api)
     - [SDK](#sdk)
     - [语义规范](#语义规范)
-    - [Contrib程序包](#contrib程序包)
+    - [贡献包](#贡献包)
     - [版本控制与稳定性](#版本控制与稳定性)
   - [调用链信号](#调用链信号)
     - [调用链](#调用链)
@@ -24,13 +24,13 @@
     - [基于预定义聚合类型记录指标](#基于预定义聚合类型记录指标)
     - [指标数据模型与SDK](#指标数据模型与sdk)
   - [日志信号](#日志信号)
-    - [Data model](#data-model)
-  - [Baggage Signal](#baggage-signal)
-  - [Resources](#resources)
-  - [Context Propagation](#context-propagation)
+    - [数据模型](#数据模型)
+  - [Baggage信号](#baggage信号)
+  - [Resource](#resource)
+  - [上下文传播](#上下文传播)
   - [Propagators](#propagators)
   - [Collector](#collector)
-  - [Instrumentation Libraries](#instrumentation-libraries)
+  - [插桩库](#插桩库)
 
 <!-- tocstop -->
 
@@ -72,21 +72,21 @@ SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用�
 **语义规范**（Semantic Conventions）定义了键和值（key-value），以描述应用程序广泛使用的概念、协议和操作。
 语义规范位于独立的仓库：https://github.com/zkxuchi/OpenTelemetry/tree/main/Semantic%20Conventions
 
-OTel的collector和客户端lib库都应该将语义规范中的**键**与其**枚举值**自动生成为常量。
+OTel的collector和客户端库都应该将语义规范中的**键**与其**枚举值**自动生成为常量。
 在语义规范版本稳定前，规范键值对**不能**写入程序中，而必须使用**YAML**文件作为配置来源。
 每种语言的OTel实现（SDK）都应该提供该语言相应的[**代码生成器**](https://github.com/zkxuchi/OpenTelemetry/tree/main/Semantic%20Conventions#代码生成器)。
 
 此外，语义规范中的[**保留属性**](semantic-conventions.md#保留属性)不能被使用。
 
-### Contrib程序包
+### 贡献包
 
-OTel项目也会维护与一些常见OSS项目的集成，这些OSS项目对web服务的可观测性有重要作用。API集成示例包含：web框架的插码，数据库客户端，以及消息队列等。SDK集成示例包含将OTel信号输出至常见分析工具或OTel存储系统的各类插件。
+OTel项目也会维护与一些常见OSS（Open Source Software）项目的集成，这些OSS项目通常对可观测性有重要作用。API集成包含：web框架的插码，数据库客户端，以及消息队列等。SDK集成包含将OTel信号输出至常见分析工具或OTel存储系统的各类插件。
 
 OTel规范要求提供OTLP exporters、TraceContext Propagators等插件，并作为SDK的一部分。
-插件以及插桩程序包可选，且与SDK分离，作为**Contrib**程序包。
-**API Contrib**是指仅依赖API的程序包；**SDK Contrib**是指同时依赖SDK的程序包。
+插件以及插桩程序包可选，且与SDK分离，作为**贡献包**（Contrib package）。
+**API贡献包**是指仅依赖API的程序包；**SDK贡献包**是指同时依赖SDK的程序包。
 
-术语**Contrib**特指OTel项目维护的插件与插桩的合集，不涉及第三方插件。
+术语**贡献包**特指OTel项目维护的插件与插桩的合集，不涉及第三方插件。
 
 ### 版本控制与稳定性
 
@@ -167,7 +167,7 @@ SpanContext是在调用链中，标识一个span所需的信息，包含调用�
 
 指标型号（Metric Signal），OTel支持记录**原始测量值**（raw measurements）与**指标**（metrics），并预定义了这些原始测量值与指标的聚合类型、[属性](./common/README.md#属性)。 
 
-通过OTel API记录原始测量值时，用户可自定义指标的聚合算法以及属性（维度）。客户端lib库通常使用该方式记录原始测量值，如：gPRC的“服务端延迟（server_latency）”、“接收字节数（received_bytes）”等。随后用户通过原始测量值生成所需的聚合值类型，如：平均值、直方图等。
+通过OTel API记录原始测量值时，用户可自定义指标的聚合算法以及属性（维度）。客户端库通常使用该方式记录原始测量值，如：gPRC的“服务端延迟（server_latency）”、“接收字节数（received_bytes）”等。随后用户通过原始测量值生成所需的聚合值类型，如：平均值、直方图等。
 
 OTel API基于预定义聚合类型生成指标（metrics），此方式多用于采集CPU/内存用量、队列长度（queue length）等简单指标。
 
@@ -177,7 +177,7 @@ OTel API基于预定义聚合类型生成指标（metrics），此方式多用�
 
 #### Measure类
 
-`Measure`类用于表述lib库记录的**值**类型，其定义了应用程序将**测量值**聚合成**指标**的模式。`Measure`由**名称**、**描述**、值的**单位**来标识。
+`Measure`类用于表述库记录的**值**类型，其定义了应用程序将**测量值**聚合成**指标**的模式。`Measure`由**名称**、**描述**、值的**单位**来标识。
 
 #### Measurement类
 
@@ -209,101 +209,61 @@ OTel API基于预定义聚合类型生成指标（metrics），此方式多用�
 
 ## 日志信号
 
-### Data model
+### 数据模型
 
-[Log Data Model](logs/data-model.md) defines how logs and events are understood by
-OpenTelemetry.
+[日志数据模型](logs/data-model.md)定义了OTel如何解析日志（logs）与事件（events）。
 
-## Baggage Signal
+## Baggage信号
 
-In addition to trace propagation, OpenTelemetry provides a simple mechanism for propagating
-name/value pairs, called `Baggage`. `Baggage` is intended for
-indexing observability events in one service with attributes provided by a prior service in
-the same transaction. This helps to establish a causal relationship between these events.
+除了调用链的传播机制外，OTel还提供一个简单机制用来传播键值对（name/value pairs）：`Baggage`。在同一个事务（transaction）中，`Baggage`通过前一个服务的属性（attributes）索引当前服务的事件，从而有助于建立事务间的因果关系。
 
-While `Baggage` can be used to prototype other cross-cutting concerns, this mechanism is primarily intended
-to convey values for the OpenTelemetry observability systems.
+虽然`Baggage`可作为其他横切关注点（cross-cutting concerns）的原型（prototype），但是此机制主要用于值传递。
+`Baggage`消费这些值，并作为指标（metrics）的附加属性（attributes），例如：
 
-These values can be consumed from `Baggage` and used as additional attributes for metrics,
-or additional context for logs and traces. Some examples:
+- Web服务可以从发送请求的服务获取其上下文（context）
+- SaaS服务可以在上下文中标注哪些API用户或token负责处理该请求
+- 确定图像处理服务的错误与哪些浏览器版本相关
 
-- a web service can benefit from including context around what service has sent the request
-- a SaaS provider can include context about the API user or token that is responsible for that request
-- determining that a particular browser version is associated with a failure in an image processing service
+为了保证后端系统与OpenTracing的兼容性，当使用OpenTracing桥接（bridge）时，Baggage为作为`Baggage`进行传播。
+不同标准下，新的关注点应该创建一个新的横切关注点以覆盖其用例（use-case），虽然一样采用W3C规范的编码格式，但是会使用新的HTTP Header以分布式调用链的方式传递数据。
 
-For backward compatibility with OpenTracing, Baggage is propagated as `Baggage` when
-using the OpenTracing bridge. New concerns with different criteria should consider creating a new
-cross-cutting concern to cover their use-case; they may benefit from the W3C encoding format but
-use a new HTTP header to convey data throughout a distributed trace.
+## Resource
 
-## Resources
+`Resource`用于采集遥测信号（Telemetry）的**实体**信息，如：某个k8s容器的指标，可关联其所属集群、命名空间、pod、容器名称等资源信息。
+`Resource`可采集**实体**完整的层级结构，如：某个云中的主机，进程所运行的容器或应用等。
+一些进程（process）的标示信息可通过OTel SDK自动与遥测信号（Telemetry）关联。
 
-`Resource` captures information about the entity for which telemetry is
-recorded. For example, metrics exposed by a Kubernetes container can be linked
-to a resource that specifies the cluster, namespace, pod, and container name.
+## 上下文传播
 
-`Resource` may capture an entire hierarchy of entity identification. It may
-describe the host in the cloud and specific container or an application running
-in the process.
+上下文传播（context propagation），OTel的所有横切关注点（如调用链、指标），共享一个底层的`Context`机制，该机制用于在分布式事务的生命周期中存储状态和访问数据。
 
-Note, that some of the process identification information can be associated with
-telemetry automatically by the OpenTelemetry SDK.
-
-## Context Propagation
-
-All of OpenTelemetry cross-cutting concerns, such as traces and metrics,
-share an underlying `Context` mechanism for storing state and
-accessing data across the lifespan of a distributed transaction.
-
-See the [Context](context/README.md)
+参阅[上下文](context/README.md)。
 
 ## Propagators
 
-OpenTelemetry uses `Propagators` to serialize and deserialize cross-cutting concern values
-such as `Span`s (usually only the `SpanContext` portion) and `Baggage`. Different `Propagator` types define the restrictions
-imposed by a specific transport and bound to a data type.
+OTel使用`Propagators`序列化及反序列化横切关注点的值，如：`Span`（通常仅`SpanContext`部分）与 `Baggage`。
+`Propagator`类型定义了各传输协议的限制，并绑定至数据类型。
 
-The Propagators API currently defines one `Propagator` type:
+`Propagators` API当前只定义了一个`Propagator`类型：
 
-- `TextMapPropagator` injects values into and extracts values from carriers as text.
+- `TextMapPropagator` 以文本方式向`carriers`中注入或提取值。
 
 ## Collector
 
-The OpenTelemetry collector is a set of components that can collect traces,
-metrics and eventually other telemetry data (e.g. logs) from processes
-instrumented by OpenTelemetry or other monitoring/tracing libraries (Jaeger,
-Prometheus, etc.), do aggregation and smart sampling, and export traces and
-metrics to one or more monitoring/tracing backends. The collector will allow to
-enrich and transform collected telemetry (e.g. add additional attributes or
-scrub personal information).
+OTel collector是一套组件，用于接收调用链、指标、日志等遥测信号，不仅支持OTel插桩，也支持第三方的监控/调用链追踪库，如：Jaeger，Prometheus等。其支持对调用链与指标的聚合、智能采样，并输出至一个或多个后端系统（backends）。Collector还支持丰富（enrich）和转换（transform）采集到的遥测信号，如：附加属性、清洗个人信息等。
 
-The OpenTelemetry collector has two primary modes of operation: Agent (a daemon
-running locally with the application) and Collector (a standalone running
-service).
+OTel collector支持两种运行模式：Agent（运行在应用本地的守护进程）、Collector（独立运行的服务）。
 
-Read more at OpenTelemetry Service [Long-term
-Vision](https://github.com/open-telemetry/opentelemetry-collector/blob/master/docs/vision.md).
+OTel Collector的[长期愿景](https://github.com/open-telemetry/opentelemetry-collector/blob/master/docs/vision.md)。
 
-## Instrumentation Libraries
+## 插桩库
 
-See [Instrumentation Library](glossary.md#instrumentation-library)
+该项目起源于以直接调用OTel API的方式，让每个应用程序及库都可开箱即用。但是许多库并为进行该集成，此外也需要一个独立的库注入这些调用，可采用诸如：接口封装（wrapping interfaces）、订阅特定的库回调、将现有的遥测信号转换为OTel数据模型等机制。
 
-The inspiration of the project is to make every library and application
-observable out of the box by having them call OpenTelemetry API directly. However,
-many libraries will not have such integration, and as such there is a need for
-a separate library which would inject such calls, using mechanisms such as
-wrapping interfaces, subscribing to library-specific callbacks, or translating
-existing telemetry into the OpenTelemetry model.
+所以用于开启其他库OTel可观测性功能的库，称为[插桩库](glossary.md#插桩库)（Instrumentation Libraries）。
+插桩库的命名应该与被插码库的命名语义相同，如：middleware等。
 
-A library that enables OpenTelemetry observability for another library is called
-an [Instrumentation Library](glossary.md#instrumentation-library).
-
-An instrumentation library should be named to follow any naming conventions of
-the instrumented library (e.g. 'middleware' for a web framework).
-
-If there is no established name, the recommendation is to prefix packages
-with "opentelemetry-instrumentation", followed by the instrumented library
-name itself. Examples include:
+如果没有规范名称，推荐采用`opentelemetry-instrumentation`作为前缀，加上被插码库的名称，如：
 
 * opentelemetry-instrumentation-flask (Python)
 * @opentelemetry/instrumentation-grpc (Javascript)
