@@ -64,8 +64,8 @@ API包由用于插码的**横切公共接口**（cross-cutting public interfaces
 
 SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用所有者**（[application owner](glossary.md#应用所有者)）安装与管理。
 需要注意，SDK包含了额外的公共接口（public interfaces），这些公共接口并不是API的一部分，因为它们不是**横切关注点**（cross-cutting concerns）。这些公共接口被定义为**构造器**（[constructors](glossary.md#构造器)）和**插件接口**（[plugin interfaces](glossary.md#插件接口)）。
-**应用所有者**使用SDK构造器；**插件作者**（[plugin authors](glossary.md#插件作者)）使用SDK插件接口。
-插桩作者（[Instrumentation authors](glossary.md#插桩作者)）**不能**直接引用任何类型的SDK包，只能引用API。
+**应用所有者**使用SDK构造器；**插件维护者**（[plugin authors](glossary.md#插件维护者)）使用SDK插件接口。
+插桩维护者（[Instrumentation authors](glossary.md#插桩维护者)）**不能**直接引用任何类型的SDK包，只能引用API。
 
 ### 语义规范
 
