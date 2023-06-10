@@ -86,7 +86,7 @@ OTel规范要求提供OTLP exporters、TraceContext Propagators等插件，并�
 插件以及插桩程序包可选，且与SDK分离，作为**贡献包**（Contrib package）。
 **API贡献包**是指仅依赖API的程序包；**SDK贡献包**是指同时依赖SDK的程序包。
 
-术语**贡献包**特指OTel项目维护的插件与插桩的合集，不涉及第三方插件。
+术语**贡献包**（Contrib）特指OTel项目维护的插件与插桩的合集，不涉及第三方插件。
 
 ### 版本控制与稳定性
 
