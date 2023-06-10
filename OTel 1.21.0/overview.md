@@ -54,7 +54,7 @@ OTel的**插桩（instrumentation）**代码可插入各代码库的源码中（
 由于**横切关注点**本质上违反了SOC（分离关注点separation of concerns）设计原则，因此使用**横切**（cross-cutting） APIs进行**插码**时需要额外谨慎，以避免源码库产生问题。
 
 OTel客户端在设计上，将每种信号中必须作为**横切关注点**插码的部分与可独立管理的部分拆分，同时作为一个可扩展框架。
-因此，每种信号由4类包组成：API、SDK、语义规范（Semantic Conventions）、Contrib。
+因此，每种信号由4类包组成：API、SDK、语义规范（Semantic Conventions）、贡献包（Contrib）。
 
 ### API
 
