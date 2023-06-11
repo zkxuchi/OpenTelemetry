@@ -28,8 +28,8 @@
   - [Baggage信号](#baggage信号)
   - [Resource](#resource)
   - [上下文传播](#上下文传播)
-  - [Propagators](#propagators)
-  - [Collector](#collector)
+  - [传播器](#传播器)
+  - [采集器](#采集器)
   - [插桩库](#插桩库)
 
 <!-- tocstop -->
@@ -50,27 +50,28 @@
 
 每种**信号**都是软件描述自身的一种方式。
 各类代码库（如：web框架、数据库客户端）都需要通过各种**信号**来描述自身。
-OTel的**插桩（instrumentation）**代码可插入各代码库的源码中（该过程称之为**插码**），从而使OTel成为**横切关注点（[cross-cutting concern](https://en.wikipedia.org/wiki/Cross-cutting_concern)）**。
-由于**横切关注点**本质上违反了SOC（分离关注点separation of concerns）设计原则，因此使用**横切**（cross-cutting） APIs进行**插码**时需要额外谨慎，以避免源码库产生问题。
+OTel的**插桩（instrumentation）**代码可插入各代码库的源码中，从而使OTel成为**横切关注点（[cross-cutting concern](https://en.wikipedia.org/wiki/Cross-cutting_concern)）**。
+由于**横切关注点**本质上违反了SOC（分离关注点separation of concerns）设计原则，因此使用**横切**（cross-cutting） APIs进行**插桩**时需要额外谨慎，以避免源码库产生问题。
 
-OTel客户端在设计上，将每种信号中必须作为**横切关注点**插码的部分与可独立管理的部分拆分，同时作为一个可扩展框架。
+OTel客户端在设计上，将每种信号中必须作为**横切关注点**插桩的部分与可独立管理的部分拆分，同时作为一个可扩展框架。
 因此，每种信号由4类包组成：API、SDK、语义规范（Semantic Conventions）、Contrib。
 
 ### API
 
-API包由用于插码的**横切公共接口**（cross-cutting public interfaces）组成。OTel客户端中，任何导入第三方库或应用代码的部分，都被认为是API的一部分。
+API包由用于插桩的**横切公共接口**（cross-cutting public interfaces）组成。OTel客户端中，任何导入第三方库或应用代码的部分，都被认为是API的一部分。
 
 ### SDK
 
-SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用所有者**（[application owner](glossary.md#应用所有者)）安装与管理。
+SDK是OTel项目提供的API实现。在一个应用程序中，SDK由**应用负责人**（[application owner](glossary.md#应用负责人)）安装与管理。
 需要注意，SDK包含了额外的公共接口（public interfaces），这些公共接口并不是API的一部分，因为它们不是**横切关注点**（cross-cutting concerns）。这些公共接口被定义为**构造器**（[constructors](glossary.md#构造器)）和**插件接口**（[plugin interfaces](glossary.md#插件接口)）。
-**应用所有者**使用SDK构造器；**插件作者**（[plugin authors](glossary.md#插件作者)）使用SDK插件接口。
+**应用负责人**使用SDK构造器；**插件作者**（[plugin authors](glossary.md#插件作者)）使用SDK插件接口。
 插桩作者（[Instrumentation authors](glossary.md#插桩作者)）**不能**直接引用任何类型的SDK包，只能引用API。
 
 ### 语义规范
 
 **语义规范**（Semantic Conventions）定义了键和值（key-value），以描述应用程序广泛使用的概念、协议和操作。
-语义规范位于独立的仓库：https://github.com/zkxuchi/OpenTelemetry/tree/main/Semantic%20Conventions
+
+语义规范位于独立的[仓库](https://github.com/zkxuchi/OpenTelemetry/tree/main/Semantic%20Conventions)。
 
 OTel的collector和客户端库都应该将语义规范中的**键**与其**枚举值**自动生成为常量。
 在语义规范版本稳定前，规范键值对**不能**写入程序中，而必须使用**YAML**文件作为配置来源。
@@ -80,7 +81,7 @@ OTel的collector和客户端库都应该将语义规范中的**键**与其**枚�
 
 ### 贡献包
 
-OTel项目也会维护与一些常见OSS（Open Source Software）项目的集成，这些OSS项目通常对可观测性有重要作用。API集成包含：web框架的插码，数据库客户端，以及消息队列等。SDK集成包含将OTel信号输出至常见分析工具或OTel存储系统的各类插件。
+OTel项目也会维护与一些常见OSS（Open Source Software）项目的集成，这些OSS项目通常对可观测性有重要作用。API集成包含：web框架的插桩，数据库客户端，以及消息队列等。SDK集成包含将OTel信号输出至常见分析工具或OTel存储系统的各类插件。
 
 OTel规范要求提供OTLP exporters、TraceContext Propagators等插件，并作为SDK的一部分。
 插件以及插桩程序包可选，且与SDK分离，作为**贡献包**（Contrib package）。
@@ -239,31 +240,31 @@ OTel API基于预定义聚合类型生成指标（metrics），此方式多用�
 
 参阅[上下文](context/README.md)。
 
-## Propagators
+## 传播器
 
-OTel使用`Propagators`序列化及反序列化横切关注点的值，如：`Span`（通常仅`SpanContext`部分）与 `Baggage`。
+OTel使用传播器`Propagators`序列化及反序列化横切关注点的值，如：`Span`（通常仅`SpanContext`部分）与 `Baggage`。
 `Propagator`类型定义了各传输协议的限制，并绑定至数据类型。
 
 `Propagators` API当前只定义了一个`Propagator`类型：
 
 - `TextMapPropagator` 以文本方式向`carriers`中注入或提取值。
 
-## Collector
+## 采集器
 
-OTel collector是一套组件，用于接收调用链、指标、日志等遥测信号，不仅支持OTel插桩，也支持第三方的监控/调用链追踪库，如：Jaeger，Prometheus等。其支持对调用链与指标的聚合、智能采样，并输出至一个或多个后端系统（backends）。Collector还支持丰富（enrich）和转换（transform）采集到的遥测信号，如：附加属性、清洗个人信息等。
+OTel采集器（collector）是一套组件，用于接收调用链、指标、日志等遥测信号，不仅支持OTel插桩，也支持第三方的监控/调用链追踪库，如：Jaeger，Prometheus等。其支持对调用链与指标的聚合、智能采样，并输出至一个或多个后端系统（backends）。采集器还支持丰富（enrich）和转换（transform）采集到的遥测信号，如：附加属性、清洗个人信息等。
 
-OTel collector支持两种运行模式：Agent（运行在应用本地的守护进程）、Collector（独立运行的服务）。
+OTel采集器支持两种运行模式：代理（Agent，运行在应用本地的守护进程）、采集器（Collector，独立运行的服务）。
 
-OTel Collector的[长期愿景](https://github.com/open-telemetry/opentelemetry-collector/blob/master/docs/vision.md)。
+OTel采集器的[长期规划](https://github.com/open-telemetry/opentelemetry-collector/blob/master/docs/vision.md)。
 
 ## 插桩库
 
 该项目起源于以直接调用OTel API的方式，让每个应用程序及库都可开箱即用。但是许多库并为进行该集成，此外也需要一个独立的库注入这些调用，可采用诸如：接口封装（wrapping interfaces）、订阅特定的库回调、将现有的遥测信号转换为OTel数据模型等机制。
 
 所以用于开启其他库OTel可观测性功能的库，称为[插桩库](glossary.md#插桩库)（Instrumentation Libraries）。
-插桩库的命名应该与被插码库的命名语义相同，如：middleware等。
+插桩库的命名应该与被插桩库的命名语义相同，如：middleware等。
 
-如果没有规范名称，推荐采用`opentelemetry-instrumentation`作为前缀，加上被插码库的名称，如：
+如果没有规范名称，推荐采用`opentelemetry-instrumentation`作为前缀，加上被插桩库的名称，如：
 
 * opentelemetry-instrumentation-flask (Python)
 * @opentelemetry/instrumentation-grpc (Javascript)
