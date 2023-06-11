@@ -53,8 +53,8 @@
 OTel的**插桩（instrumentation）**代码可插入各代码库的源码中，从而使OTel成为**横切关注点（[cross-cutting concern](https://en.wikipedia.org/wiki/Cross-cutting_concern)）**。
 由于**横切关注点**本质上违反了SOC（分离关注点separation of concerns）设计原则，因此使用**横切**（cross-cutting） APIs进行**插桩**时需要额外谨慎，以避免源码库产生问题。
 
-OTel客户端在设计上，将每种信号中必须作为**横切关注点**插桩的部分与可独立管理的部分拆分，同时作为一个可扩展框架。
-因此，每种信号由4类包组成：API、SDK、语义规范（Semantic Conventions）、Contrib。
+OTel客户端在设计上，将每种信号中必须作为**横切关注点**插码的部分与可独立管理的部分拆分，同时作为一个可扩展框架。
+因此，每种信号由4类包组成：API、SDK、语义规范（Semantic Conventions）、贡献包（Contrib）。
 
 ### API
 
@@ -87,7 +87,7 @@ OTel规范要求提供OTLP exporters、TraceContext Propagators等插件，并�
 插件以及插桩程序包可选，且与SDK分离，作为**贡献包**（Contrib package）。
 **API贡献包**是指仅依赖API的程序包；**SDK贡献包**是指同时依赖SDK的程序包。
 
-术语**贡献包**特指OTel项目维护的插件与插桩的合集，不涉及第三方插件。
+术语**贡献包**（Contrib）特指OTel项目维护的插件与插桩的合集，不涉及第三方插件。
 
 ### 版本控制与稳定性
 
@@ -159,7 +159,7 @@ SpanContext是在调用链中，标识一个span所需的信息，包含调用�
 
 每个span可链接多个具有因果关系的其他span。**链接**（Links）可指向相同或不同调用链中的span。**链接**可表示批处理操作，当一个span由多个初始化中的span发起，则每个被链接的span表示该批处理中的单个传入项目。
 
-**链接**还可用于声明初始调用链与后续调用链直接的关系，如：当一个调用链进入服务的信任边界（trusted boundaries），该服务的策略要求生成新的调用链，而非信任原调用链上下文（context）。
+**链接**还可用于声明初始调用链与后续调用链的关系，如：当一个调用链进入服务的信任边界（trusted boundaries），该服务的策略要求生成新的调用链，而非信任原调用链上下文（context）。
 此外，链接的调用链也可用于标识高并发下，一个请求发起的长时间运行的异步数据操作。
 
 当使用分散scatter/聚集gather（分支fork/合并join）模式时，根操作会启动多个下游处理操作，每个下游操作生成一个span的同时，又并会将所有操作结果聚合回最后一个Span中，这个span被链接到这些被聚合操作的span上，且所有spans属于同一个调用链。这时**链接**和span的父字段（parent field）作用类似，但是该场景下父字段不适用，因为父字段用于标识只有一个父span的场景，在分散/集合与批处理场景下，最后一个span会有多个父span。
