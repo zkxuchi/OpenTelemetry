@@ -1,4 +1,4 @@
-# OpenTelemetry 规范 1.21.0
+# OpenTelemetry 规范 1.22.0
 
 ## 目录
 
