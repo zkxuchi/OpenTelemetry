@@ -20,13 +20,13 @@
     - [带内与带外数据](#带内与带外数据)
     - [手动插桩](#手动插桩)
     - [自动插桩](#自动插桩)
-    - [Telemetry SDK](#telemetry-sdk)
-    - [Constructors](#constructors)
-    - [SDK Plugins](#sdk-plugins)
-    - [Exporter Library](#exporter-library)
-    - [Instrumented Library](#instrumented-library)
-    - [Instrumentation Library](#instrumentation-library)
-    - [Instrumentation Scope](#instrumentation-scope)
+    - [遥测SDK](#遥测sdk)
+    - [构造器](#构造器)
+    - [SDK插件](#sdk插件)
+    - [导出器库](#导出器库)
+    - [插桩构建库](#插桩构建库)
+    - [插桩库](#插桩库)
+    - [插桩作用域](#插桩作用域)
     - [Tracer Name / Meter Name](#tracer-name--meter-name)
     - [Execution Unit](#execution-unit)
   - [Logs](#logs)
@@ -99,64 +99,49 @@ OTel中，我们将分布式系统内，作为业务消息的一部分在组件�
 
 同义词: *Auto-instrumentation*.
 
-### Telemetry SDK
+### 遥测SDK
 
-Denotes the library that implements the *OpenTelemetry API*.
+遥测（Telemetry）SDK是实现*OTel API*的库。
 
-See [Library Guidelines](library-guidelines.md#sdk-implementation) and
-[Library resource semantic conventions](resource/semantic_conventions/README.md#telemetry-sdk).
+更多请查看[库指南](library-guidelines.md#sdk实现)以及[库资源语义规范](resource/semantic_conventions/README.md#遥测sdk)。
 
-### Constructors
+### 构造器
 
-Constructors are public code used by Application Owners to initialize and configure the OpenTelemetry SDK and contrib packages. Examples of constructors include configuration objects, environment variables, and builders.
+构造器（Constructors）是应用负责人用来初始化和配置OTel SDK以及贡献包的公共代码。例如：配置对象、环境变量以及构建器（builders）。
 
-### SDK Plugins
+### SDK插件
 
-Plugins are libraries which extend the OpenTelemetry SDK. Examples of plugin interfaces are the `SpanProcessor`, `Exporter`, and `Sampler` interfaces.
+插件是扩展OTel SDK的库，常见的插件接口有：`SpanProcessor`、`Exporter`和`Sampler`接口等。
 
-### Exporter Library
+### 导出器库
 
-Exporters are SDK Plugins which implement the `Exporter` interface, and emit telemetry to consumers.
+导出器库（Exporter library）是实现`Exporter`接口的SDK插件，并将遥测信号发送至消费者。
 
-### Instrumented Library
+### 插桩构建库
 
-Denotes the library for which the telemetry signals (traces, metrics, logs) are gathered.
+插桩构建库（Instrumented Library）是用于采集遥测信号（调用链、指标、日志）的库。
+对OTel API的调用即可由**插桩构建库**自己完成，也可由其它[插桩库](#instrumentation-library)完成。
 
-The calls to the OpenTelemetry API can be done either by the Instrumented Library itself,
-or by another [Instrumentation Library](#instrumentation-library).
+例如：`org.mongodb.client`。
 
-Example: `org.mongodb.client`.
+### 插桩库
 
-### Instrumentation Library
+插桩库（Instrumentation Library）是指为[插桩构建库](#插桩构建库)提供插桩功能的库。
+**插桩构建库**和**插桩库**可以是同一个库，如果该库内置了OTel插桩代码。
 
-Denotes the library that provides the instrumentation for a given [Instrumented Library](#instrumented-library).
-*Instrumented Library* and *Instrumentation Library* may be the same library
-if it has built-in OpenTelemetry instrumentation.
+详细定义及命名指南请参阅[概览](overview.md#插桩库)。
 
-See [Overview](overview.md#instrumentation-libraries) for a more detailed definition and naming guidelines.
+例如：`io.opentelemetry.contrib.mongodb`。
 
-Example: `io.opentelemetry.contrib.mongodb`.
+同义词：*Instrumenting Library*。
 
-Synonyms: *Instrumenting Library*.
+### 插桩作用域
 
-### Instrumentation Scope
+插桩作用域（Instrumentation Scope）是应用代码中关联要发送的遥测信号的逻辑单元。通常由开发者来决定合理的插桩作用域，常规使用[插桩库](#插桩库)的作用域，但是也有其他常用的作用域，如使用一个模块、包或类作为插桩作用域。
 
-A logical unit of the application code with which the emitted telemetry can be
-associated. It is typically the developer's choice to decide what denotes a
-reasonable instrumentation scope. The most common approach is to use the
-[instrumentation library](#instrumentation-library) as the scope, however other
-scopes are also common, e.g. a module, a package, or a class can be chosen as
-the instrumentation scope.
+如果代码单元有版本，则用**名称+版本**定义插桩作用域，否则省略**版本**，只是用**名称**。名称或名称+版本必须可唯一标识发送遥测信号的代码单元，通常使用该代码单元的**全限定名**（fully qualified name）保证唯一性（全限定库/类名）。
 
-If the unit of code has a version then the instrumentation scope is defined by
-the (name,version) pair otherwise the version is omitted and only the name is
-used. The name or (name,version) pair uniquely identify the logical unit of the
-code that emits the telemetry. A typical approach to ensure uniqueness is to use
-fully qualified name of the emitting code (e.g. fully qualified library name or
-fully qualified class name).
-
-The instrumentation scope is used to obtain a
-[Tracer or Meter](#tracer-name--meter-name).
+插桩作用域用于获取一个[`Tracer`或`Meter`](#tracer-name--meter-name)。
 
 The instrumentation scope may have zero or more additional attributes that provide
 additional information about the scope. For example for a scope that specifies an
