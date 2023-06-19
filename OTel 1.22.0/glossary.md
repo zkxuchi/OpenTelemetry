@@ -27,17 +27,17 @@
     - [插桩构建库](#插桩构建库)
     - [插桩库](#插桩库)
     - [插桩作用域](#插桩作用域)
-    - [Tracer Name / Meter Name](#tracer-name--meter-name)
-    - [Execution Unit](#execution-unit)
-  - [Logs](#logs)
-    - [Log Record](#log-record)
-    - [Log](#log)
-    - [Embedded Log](#embedded-log)
-    - [Standalone Log](#standalone-log)
-    - [Log Attributes](#log-attributes)
-    - [Structured Logs](#structured-logs)
-    - [Flat File Logs](#flat-file-logs)
-    - [Log Appender / Bridge](#log-appender--bridge)
+    - [追踪器与计量器名称](#追踪器与计量器名称)
+    - [执行单元](#执行单元)
+  - [日志](#日志)
+    - [日志记录](#日志记录)
+    - [日志](#日志-1)
+    - [嵌入式日志](#嵌入式日志)
+    - [独立日志](#独立日志)
+    - [日志属性](#日志属性)
+    - [结构化日志](#结构化日志)
+    - [平面文件日志](#平面文件日志)
+    - [日志输出器/桥接器](#日志输出器桥接器)
 
 <!-- tocstop -->
 
@@ -141,77 +141,55 @@ OTel中，我们将分布式系统内，作为业务消息的一部分在组件�
 
 如果代码单元有版本，则用**名称+版本**定义插桩作用域，否则省略**版本**，只是用**名称**。名称或名称+版本必须可唯一标识发送遥测信号的代码单元，通常使用该代码单元的**全限定名**（fully qualified name）保证唯一性（全限定库/类名）。
 
-插桩作用域用于获取一个[`Tracer`或`Meter`](#tracer-name--meter-name)。
+插桩作用域用于获取一个[`Tracer`或`Meter`](#追踪器与计量器名称)。
 
-The instrumentation scope may have zero or more additional attributes that provide
-additional information about the scope. For example for a scope that specifies an
-instrumentation library an additional attribute may be recorded to denote the URL of the
-repository URL the library's source code is stored. Since the scope is a build-time
-concept the attributes of the scope cannot change at runtime.
+插桩作用域可以有附加的属性提供额外的作用域信息，例如：可通过属性指定插桩库存放源码的仓库URL。由于作用域是一个构建时（build-time）概念，所以作用域的属性在运行时中不可修改。
 
-### Tracer Name / Meter Name
+### 追踪器与计量器名称
 
-This refers to the `name` and (optional) `version` arguments specified when
-creating a new `Tracer` or `Meter` (see
-[Obtaining a Tracer](trace/api.md#tracerprovider)/[Obtaining a Meter](metrics/api.md#meterprovider)).
-The name/version pair identifies the
-[Instrumentation Scope](#instrumentation-scope), for example the
-[Instrumentation Library](#instrumentation-library) or another unit of
-application in the scope of which the telemetry is emitted.
+追踪器与计量器名称（Tracer Name / Meter Name）指创建一个新的`Tracer`或`Meter`时的`name`和`version`（可选）参数，详见[使用追踪器](trace/api.md#tracerprovider)/[使用计量器](metrics/api.md#meterprovider)
+每对`name`和`version`参数标识一个[插桩作用域](#插桩作用域)，例如：应用程序中发送遥测信号的[插桩库](#插桩库)或其他的代码单元。
 
-### Execution Unit
+### 执行单元
 
-An umbrella term for the smallest unit of sequential code execution, used in different concepts of multitasking. Examples are threads, coroutines or fibers.
+执行单元（Execution Unit）是一个通用术语，代指顺序代码执行的最小单元，用于多任务的不同概念中，例如：线程（threads）、协程（coroutines）或纤程（fibers）。
 
-## Logs
+## 日志
 
-### Log Record
+### 日志记录
 
-A recording of an event. Typically the record includes a timestamp indicating
-when the event happened as well as other data that describes what happened,
-where it happened, etc.
+日志记录（Log Record）是事件（event）的记录，通常包含一个时间戳用于标识事件何时发生，以及其他描述事件发生于何地、何事的数据。
 
-Synonyms: *Log Entry*.
+同义词: *日志条目（Log Entry）*.
 
-### Log
+### 日志
 
+日志代指日志记录（log records）的合集，有时也会使用日志代指单条日志记录，因此，需要结合上下文小心使用，以免引起歧义。
 Sometimes used to refer to a collection of Log Records. May be ambiguous, since
 people also sometimes use `Log` to refer to a single `Log Record`, thus this
 term should be used carefully and in the context where ambiguity is possible
 additional qualifiers should be used (e.g. `Log Record`).
 
-### Embedded Log
+### 嵌入式日志
 
-`Log Records` embedded inside a [Span](trace/api.md#span)
-object, in the [Events](trace/api.md#add-events) list.
+嵌入式日志（Embedded Log）即为嵌入在[span](trace/api.md#span)中的日志，通常在span的[事件](trace/api.md#添加事件)列表中。
 
-### Standalone Log
+### 独立日志
 
-`Log Records` that are not embedded inside a `Span` and are recorded elsewhere.
+独立日志（Standalone Log）指单独记录的，没有嵌入在span中的日志。
 
-### Log Attributes
+### 日志属性
 
-Key/value pairs contained in a `Log Record`.
+日志属性（Log Attributes）指日志条目中的键值对（Key/value pairs）。
 
-### Structured Logs
+### 结构化日志
 
-Logs that are recorded in a format which has a well-defined structure that allows
-to differentiate between different elements of a Log Record (e.g. the Timestamp,
-the Attributes, etc). The *Syslog protocol* ([RFC 5424](https://tools.ietf.org/html/rfc5424)),
-for example, defines a `structured-data` format.
+结构化日志（Log Attributes）指以某种结构格式记录的日志，可区分日志中的不同元素（时间戳、各属性等），例如：*Syslog协议* ([RFC 5424](https://tools.ietf.org/html/rfc5424))即定义了一种结构化日志格式。
 
-### Flat File Logs
+### 平面文件日志
 
-Logs recorded in text files, often one line per log record (although multiline
-records are possible too). There is no common industry agreement whether
-logs written to text files in more structured formats (e.g. JSON files)
-are considered Flat File Logs or not. Where such distinction is important it is
-recommended to call it out specifically.
+平面文件日志（Flat File Logs）即为日志记录在文本中，通常每行为一条日志条目（也可能是多条）。目前行业标准没有规范结构化日志（日JSON文件）是否为平面文件日志。所以需要自行约定。
 
-### Log Appender / Bridge
+### 日志输出器/桥接器
 
-A log appender or bridge is a component which bridges logs from an existing log
-API into OpenTelemetry using the [Log Bridge API](./logs/bridge-api.md). The
-terms "log bridge" and "log appender" are used interchangeably, reflecting that
-these components bridge data into OpenTelemetry, but are often called appenders
-in the logging domain.
+日志输出器/桥接器（Log Appender / Bridge）是一个应用组件，其使用[Log Bridge API](./logs/bridge-api.md)将现有的日志API转换为OTel协议。这两个术语可互换使用，均指将数据转换为OTel协议的组件，但是在日志领域中，通常成为输出器（Appender）。
