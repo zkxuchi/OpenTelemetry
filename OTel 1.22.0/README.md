@@ -4,7 +4,7 @@
 
 - [概述](overview.md)
 - [术语表](glossary.md)
-- [Versioning and stability for OpenTelemetry clients](https://opentelemetry.io/docs/specs/otel/versioning-and-stability/)
+- [OTel客户端版本控制及稳定性](versioning-and-stability.md)
 - Library Guidelines
   - [Package/Library Layout](https://opentelemetry.io/docs/specs/otel/library-layout/)
   - [General error handling guidelines](https://opentelemetry.io/docs/specs/otel/error-handling/)
